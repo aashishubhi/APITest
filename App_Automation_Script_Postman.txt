@@ -1,0 +1,304 @@
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+pm.test("Status code name has string as OK", function () {
+    pm.response.to.have.status("OK");
+});
+pm.test("Response time is less than 1000ms", function () {
+    pm.expect(pm.response.responseTime).to.be.below(1000);
+});
+pm.test("Content-Type is present", function () {
+    pm.response.to.have.header("Content-Type");
+});
+
+var requestName = pm.info.requestName;
+
+switch (requestName) {
+    case "getBusRoute":
+        pm.test("Find the length of Bus Route response", function () {
+            var jsonData = pm.response.json();
+            var responseLength = JSON.stringify(jsonData).length;
+            pm.globals.set("busResponseLength", responseLength);
+            pm.expect(responseLength).to.be.greaterThan(0);
+            console.log("Bus Route Response Length: " + responseLength);
+        });
+        pm.test("Check medium as Bus or Walk", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].routes[0].medium).to.be.oneOf(["Walk", "Bus"]);
+            console.log("Medium is: " + jsonData.data[0].routes[0].medium);
+        });
+        pm.test("Includes uniqueId", function () {
+            pm.expect(pm.response.text()).to.include("uniqueId");
+        });
+        pm.test("Check sourceLat", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].routes[0].sourceLat).to.eql(pm.iterationData.get("sourceLat"));
+        });
+        pm.test("Check sourceLong", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].routes[0].sourceLong).to.eql(pm.iterationData.get("sourceLong"));
+        });
+        break;
+
+    case "getMetroRoute":
+        pm.test("Find the length of Metro Route response", function () {
+            var jsonData = pm.response.json();
+            var responseLength = JSON.stringify(jsonData).length;
+            pm.globals.set("metroResponseLength", responseLength);
+            pm.expect(responseLength).to.be.greaterThan(0);
+            console.log("Metro Route Response Length: " + responseLength);
+        });
+        pm.test("Check medium as Metro", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].routes[0].medium).to.eql("Metro");
+        });
+        pm.test("Includes sourceLat", function () {
+            pm.expect(pm.response.text()).to.include("sourceLat");
+        });
+        break;
+
+    case "getRailRoute":
+        pm.test("Find the length of Rail Route response", function () {
+            var jsonData = pm.response.json();
+            var responseLength = JSON.stringify(jsonData).length;
+            pm.globals.set("railResponseLength", responseLength);
+            pm.expect(responseLength).to.be.greaterThan(0);
+            console.log("Rail Route Response Length: " + responseLength);
+        });
+        break;
+        
+    case "getCombinedRoute":
+
+        pm.test("Check for one Bus, one Metro, and one Rail", function () {
+            var jsonData = pm.response.json();
+            var routeMediums = jsonData.data.map(function (item) {
+                return item.routes.map(function (route) {
+                    return route.medium;
+                });
+            }).flat();
+
+            pm.expect(routeMediums).to.include("Bus");
+            pm.expect(routeMediums).to.include("Metro");
+            //pm.expect(routeMediums).to.include("Rail"); //Mumbai city
+        });
+
+        pm.test("Includes uniqueId", function () {
+            pm.expect(pm.response.text()).to.include("uniqueId");
+        });
+        pm.test("Includes sourceLat", function () {
+            pm.expect(pm.response.text()).to.include("sourceLat");
+        })
+        break;
+
+    case "getNearByMetroStation":
+        pm.test("Body Contains id", function () {
+            pm.expect(pm.response.text()).to.include("id");
+        });
+        pm.test("Body Contains latitude", function () {
+            pm.expect(pm.response.text()).to.include("latitude");
+        });
+        break;
+
+    case "getNearByBusStop":
+        pm.test("Body Contains id", function () {
+            pm.expect(pm.response.text()).to.include("id");
+        });
+        pm.test("Body Contains latitude", function () {
+            pm.expect(pm.response.text()).to.include("latitude");
+        });
+        break;
+
+    case "searchMetroStation":
+        pm.test("Body Contains id", function () {
+            pm.expect(pm.response.text()).to.include("id");
+        });
+        pm.test("Body Contains latitude", function () {
+            pm.expect(pm.response.text()).to.include("latitude");
+        });
+        break;
+
+    case "searchBusStop":
+        pm.test("Body Contains id", function () {
+            pm.expect(pm.response.text()).to.include("id");
+        });
+        pm.test("Body Contains latitude", function () {
+            pm.expect(pm.response.text()).to.include("latitude");
+        });
+        break;
+
+    case "getAllMetroRoute":
+        pm.test("Body Contains routeId", function () {
+            pm.expect(pm.response.text()).to.include("routeId");
+        });
+        pm.test("Body Contains routeName", function () {
+            pm.expect(pm.response.text()).to.include("routeName");
+        });
+        break;
+
+    case "getMetroScheduleByRouteId":
+        pm.test("Body Contains scheduleId", function () {
+            pm.expect(pm.response.text()).to.include("scheduleId");
+        });
+        pm.test("Body Contains stopId", function () {
+            pm.expect(pm.response.text()).to.include("stopId");
+        });
+        pm.test("stopId is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].metroStations[0].stopId).to.not.eql(null);
+        });
+        break;
+
+    case "getNearByBusRoute":
+        pm.test("Body Contains routeId", function () {
+            pm.expect(pm.response.text()).to.include("routeId");
+        });
+        pm.test("Body Contains routeName", function () {
+            pm.expect(pm.response.text()).to.include("routeName");
+        });
+        pm.test("busStopLat is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].busStopLat).to.not.eql(null);
+        });
+        break;
+
+    case "searchBusRoute":
+        pm.test("Body Contains routeId", function () {
+            pm.expect(pm.response.text()).to.include("routeId");
+        });
+        pm.test("Body Contains routeName", function () {
+            pm.expect(pm.response.text()).to.include("routeName");
+        });
+        pm.test("busStopLat is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].busStopLat).to.not.eql(null);
+        });
+        break;
+
+    case "getBusScheduleByRouteId":
+        pm.test("Body Contains routeId", function () {
+            pm.expect(pm.response.text()).to.include("routeId");
+        });
+        pm.test("Body Contains scheduleId", function () {
+            pm.expect(pm.response.text()).to.include("scheduleId");
+        });
+        pm.test("stopId is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].busStops[0].stopId).to.not.eql(null);
+        });
+        break;
+
+    case "getAlternativeBusRoute":
+        pm.test("Body Contains routeId", function () {
+            pm.expect(pm.response.text()).to.include("routeId");
+        });
+        pm.test("Body Contains routeNumber", function () {
+            pm.expect(pm.response.text()).to.include("routeNumber");
+        });
+        pm.test("routeNumber is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].routeNumber).to.not.eql(null);
+        });
+        break;
+
+    case "searchRailStation":
+        pm.test("Body Contains id", function () {
+            pm.expect(pm.response.text()).to.include("id");
+        });
+        pm.test("Body Contains latitude", function () {
+            pm.expect(pm.response.text()).to.include("latitude");
+        });
+        pm.test("latitude is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].latitude).to.not.eql(null);
+        });
+        break;
+
+    case "getRailLine":
+        pm.test("Body Contains routeId", function () {
+            pm.expect(pm.response.text()).to.include("routeId");
+        });
+        pm.test("Body Contains routeName", function () {
+            pm.expect(pm.response.text()).to.include("routeName");
+        });
+        pm.test("routeLine is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].routeLine).to.not.eql(null);
+        });
+        break;
+
+    case "getRailStationByRouteId":
+        pm.test("Body Contains stationId", function () {
+            pm.expect(pm.response.text()).to.include("stationId");
+        });
+        pm.test("Body Contains stationName", function () {
+            pm.expect(pm.response.text()).to.include("stationName");
+        });
+        pm.test("stationLat is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data.stationLat).to.not.eql(null);
+        });
+        break;
+
+    case "getRailScheduleByStationId":
+        pm.test("Body Contains scheduleId", function () {
+            pm.expect(pm.response.text()).to.include("scheduleId");
+        });
+        pm.test("Body Contains stationId", function () {
+            pm.expect(pm.response.text()).to.include("stationId");
+        });
+        pm.test("startTime is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].stations[0].startTime).to.not.eql(null);
+        });
+        break;
+
+    case "getRailScheduleByLine":
+        pm.test("Body Contains scheduleId", function () {
+            pm.expect(pm.response.text()).to.include("scheduleId");
+        });
+        pm.test("Body Contains stationId", function () {
+            pm.expect(pm.response.text()).to.include("stationId");
+        });
+        pm.test("startTime is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].stations[0].startTime).to.not.eql(null);
+        });
+        break;
+
+    case "getFareDetail":
+        pm.test("adultFare is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data[0].adultFare).to.not.eql(null);
+        });
+        break;
+
+    case "getStopInRadius":
+        pm.test("Body Contains radius", function () {
+            pm.expect(pm.response.text()).to.include("radius");
+        });
+        pm.test("id is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data.stops[0].id).to.not.eql(null);
+        });
+        break;
+
+    case "getRouteByStopId":
+        pm.test("routeId is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data.routes[0].routeId).to.not.eql(null);
+        });
+        pm.test("routeName is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data.routes[0].routeName).to.not.eql(null);
+        });
+        pm.test("startStopName is not null", function () {
+            var jsonData = pm.response.json();
+            pm.expect(jsonData.data.routes[0].startStopName).to.not.eql(null);
+        });
+        break;
+
+    default:
+        // Handle any other cases or provide a default behavior if needed
+        break;
+}
+
